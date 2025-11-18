@@ -391,9 +391,12 @@
         }
         
         .login-logo {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 25px;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             animation: pulse 2s ease-in-out infinite;
         }
         
@@ -402,6 +405,7 @@
             height: 100%;
             object-fit: contain;
             filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.2));
+            display: block;
         }
         
         @keyframes pulse {
@@ -437,23 +441,33 @@
         }
         
         .login-box input {
-            padding: 14px 16px;
+            padding: 16px 20px;
             font-size: 1em;
             transition: all 0.3s ease;
+            border-radius: 50px;
+            border: 2px solid #e0e0e0;
+            background: #f8f9fa;
         }
         
         .login-box input:focus {
             transform: translateY(-2px);
+            background: white;
+            border-color: var(--azul-cconet);
+        }
+        
+        .login-box input::placeholder {
+            color: #999;
         }
         
         .login-box .btn-primary {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             font-size: 1.05em;
             font-weight: 700;
             margin-top: 10px;
             position: relative;
             overflow: hidden;
+            border-radius: 50px;
         }
         
         .login-box .btn-primary::before {
@@ -556,7 +570,7 @@
     <div class="login-container" id="loginContainer">
         <div class="login-box">
             <div class="login-logo">
-                <img src="logo.png" alt="Guarda Municipal de Laguna">
+                <img src="logo.png" alt="Guarda Municipal de Laguna" onerror="this.style.display='none'; this.parentElement.innerHTML='🚓';">
             </div>
             <h2>Acesso ao Sistema</h2>
             <p>Guarda Municipal de Laguna</p>
