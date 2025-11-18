@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GML - Controle de Viaturas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul-cconet: #0056b3;
+            --azul-escuro: #003d82;
+            --azul-claro: #e6f0ff;
+            --branco: #ffffff;
+            --cinza-borda: #e0e0e0;
+            --cinza-texto: #333;
+            --cinza-fundo: #f5f7fa;
+            --verde-sucesso: #28a745;
+            --verde-hover: #218838;
+            --vermelho: #dc3545;
+            --sombra-leve: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --sombra-media: 0 4px 12px rgba(0, 0, 0, 0.12);
+            --sombra-forte: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--cinza-texto);
+            min-height: 100vh;
+            padding: 30px 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .page-header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+        .forms-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .form-container {
+            flex: 1;
+            min-width: 450px;
+            background: var(--branco);
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--sombra-forte);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+        }
+        .header {
+            background: linear-gradient(135deg, var(--azul-cconet) 0%, var(--azul-escuro) 100%);
+            color: white;
+            padding: 20px 24px;
+            font-size: 1.3em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header::before {
+            content: '🚓';
+            font-size: 1.4em;
+        }
+        .form-body {
+            padding: 28px 24px;
+            flex-grow: 1;
+            background: var(--branco);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--cinza-texto);
+            font-size: 0.95em;
+        }
+        label.required::after {
+            content: " *";
+            color: red;
+        }
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid var(--cinza-borda);
+            border-radius: 8px;
+            background-color: var(--branco);
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--azul-cconet);
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .buttons {
+            text-align: right;
+            margin-top: auto;
+            padding: 0 20px 20px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sombra-media);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--azul-cconet) 0%, var(--azul-escuro) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--azul-escuro) 0%, #002a5c 100%);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--verde-sucesso) 0%, var(--verde-hover) 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, var(--verde-hover) 0%, #1e7e34 100%);
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 0.9em;
+            color: white;
+            margin-top: 40px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 { font-size: 1.8em; }
+            .forms-wrapper { flex-direction: column; }
+            .form-container { min-width: 100%; }
+            .form-grid { grid-template-columns: 1fr; }
+            .registro-container { padding: 20px; }
+        }
+        .registros-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .registro-container {
+            flex: 1;
+            min-width: 450px;
+            background: var(--branco);
+            border: none;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--sombra-forte);
+            overflow-x: auto;
+        }
+        
+        .registro-container h3 {
+            color: var(--azul-cconet);
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .registro-container h3::before {
+            content: '📋';
+            font-size: 1.2em;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid var(--cinza-borda);
+            padding: 12px 14px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        
+        th {
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        tbody tr:hover:not(.viagem-finalizada) {
+            background-color: #f8f9ff;
+        }
+        /* Permite quebra de linha nas observações e fotos */
+        th:nth-child(8), td:nth-child(8),
+        th:nth-child(9), td:nth-child(9) {
+            white-space: normal;
+        }
+        
+        thead tr {
+            background: linear-gradient(135deg, #e6f0ff 0%, #d4e4ff 100%);
+        }
+        .viagem-finalizada {
+            background-color: #f8f9fa;
+            color: #888;
+            opacity: 0.7;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--sombra-forte);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-content h3 {
+            color: var(--azul-cconet);
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        #modalErro {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Estilos de Login */
+        .login-container {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -200px;
+            right: -200px;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .login-container::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            bottom: -150px;
+            left: -150px;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(20px); }
+        }
+        
+        .login-box {
+            background: white;
+            padding: 50px 45px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 440px;
+            animation: slideUp 0.5s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--azul-cconet) 0%, var(--azul-escuro) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            margin: 0 auto 25px;
+            box-shadow: 0 8px 20px rgba(0, 86, 179, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .login-box h2 {
+            color: var(--azul-cconet);
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .login-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 35px;
+            font-size: 1.05em;
+        }
+        
+        .login-box .form-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .login-box label {
+            color: var(--cinza-texto);
+            font-weight: 600;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+        
+        .login-box input {
+            padding: 14px 16px 14px 45px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .login-box input:focus {
+            transform: translateY(-2px);
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 43px;
+            color: #999;
+            font-size: 1.2em;
+            transition: color 0.3s ease;
+        }
+        
+        .login-box input:focus + .input-icon {
+            color: var(--azul-cconet);
+        }
+        
+        .login-box .btn-primary {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.05em;
+            font-weight: 700;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-box .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .login-box .btn-primary:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 0.85em;
+        }
+        
+        .login-error {
+            background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+            border: 1px solid #fcc;
+            border-left: 4px solid #c33;
+            color: #c33;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.9em;
+            font-weight: 500;
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .login-error::before {
+            content: '⚠️ ';
+            margin-right: 8px;
+        }
+        
+        .user-info {
+            background: var(--azul-claro);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .user-info span {
+            font-weight: 600;
+            color: var(--azul-cconet);
+        }
+        
+        .btn-logout {
+            background: var(--vermelho);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-logout:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <div class="login-logo">🚓</div>
+            <h2>Acesso ao Sistema</h2>
+            <p>Guarda Municipal de Laguna</p>
+            <div class="login-error" id="loginError"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">E-mail</label>
+                    <input type="email" id="loginEmail" required placeholder="seu@email.com">
+                    <span class="input-icon">📧</span>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                    <span class="input-icon">🔒</span>
+                </div>
+                <div class="buttons" style="padding: 0; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="margin: 0; width: 100%;">
+                        <span style="position: relative; z-index: 1;">Entrar no Sistema</span>
+                    </button>
+                </div>
+            </form>
+            <div class="login-footer">
+                Sistema de Controle de Viaturas v1.0<br>
+                © 2025 GML - Todos os direitos reservados
+            </div>
+        </div>
+    </div>
+    
+    <div class="container" id="mainContainer" style="display: none;">
+        <div class="page-header">
+            <h1>🚓 Controle de Viaturas GML</h1>
+            <p>Sistema de Gestão e Monitoramento de Viaturas - Guarda Municipal de Laguna</p>
+        </div>
+        
+        <div class="user-info" id="userInfo">
+            <span id="userEmail"></span>
+            <button class="btn-logout" id="logoutBtn">Sair</button>
+        </div>
+        
+        <div class="forms-wrapper">
+            <div class="form-container">
+                <form id="saidaViaturaForm">
+                    <div class="header">
+                        Nova Saída de Viatura
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label for="viatura" class="required">Viatura</label>
+                            <select id="viatura" name="viatura" required>
+                                <option value="">Selecione...</option>
+                                <option value="VTR 0109">VTR 0109</option>
+                                <option value="VTR 0110">VTR 0110</option>
+                                <option value="VTR 0111">VTR 0111</option>
+                            </select>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="km_saida" class="required">Km Saída</label>
+                                <input type="number" id="km_saida" name="km_saida" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="protocolo" class="required">Protocolo</label>
+                                <input type="number" id="protocolo" name="protocolo" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="coordenador" class="required">Coordenador</label>
+                            <select id="coordenador" name="coordenador" required>
+                                <option value="">Selecione...</option>
+                                <option value="INSP MAIK">INSP MAIK</option>
+                                <option value="INSP JUNIOR">INSP JUNIOR</option>
+                                <option value="CHEFE DUARTE">CHEFE DUARTE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="motorista" class="required">Motorista</label>
+                            <select id="motorista" name="motorista" required>
+                                <option value="">Selecione...</option>
+                                <option value="DUARTE">DUARTE - Saleide Flor Duarte</option>
+                                <option value="JACQUES">JACQUES - Sayonara Vanderleia Jacques</option>
+                                <option value="ARLON">ARLON - Arlon Luiz Da Silva</option>
+                                <option value="LEANDRO">LEANDRO - Leandro de Araújo</option>
+                                <option value="LUIZ">LUIZ - Luiz Eduardo Cortegrosso</option>
+                                <option value="MAIK">MAIK - Maik Custódio Agostinho</option>
+                                <option value="REIS">REIS - Jair Pacheco Dos Reis Junior</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="patrulhamento" class="required">Tipo de Patrulhamento</label>
+                            <select id="patrulhamento" name="patrulhamento" required>
+                                <option value="">Selecione...</option>
+                                <option value="Ronda Preventiva">Ronda Preventiva</option>
+                                <option value="Apoio Operacional">Apoio Operacional</option>
+                                <option value="Evento Especial">Evento Especial</option>
+                                <option value="Atendimento Emergencial">Atendimento Emergencial</option>
+                                <option value="Missão">Missão</option>
+                                <option value="Manutenção de viatura">Manutenção de viatura</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                        <button type="submit" class="btn btn-primary">Registrar Saída</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-container">
+                 <div class="header">
+                    Controle de Abastecimento da Viatura
+                </div>
+                <form id="abastecimentoForm">
+                    <div class="form-body">
+                         <div class="form-grid">
+                            <div class="form-group">
+                                <label for="viatura_abastecimento" class="required">Viatura</label>
+                                <select id="viatura_abastecimento" name="viatura_abastecimento" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="VTR 0107">VTR 0107</option>
+                                    <option value="VTR 0109">VTR 0109</option>
+                                    <option value="VTR 0110">VTR 0110</option>
+                                    <option value="VTR 0111">VTR 0111</option>
+                                    <option value="SONATA ADM">SONATA ADM</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="data_abastecimento" class="required">Data Abastecimento</label>
+                                <input type="date" id="data_abastecimento" name="data_abastecimento" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="km_abastecimento" class="required">KM do Abastecimento</label>
+                                <input type="number" id="km_abastecimento" name="km_abastecimento" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="km_atual" class="required">KM Atual</label>
+                                <input type="number" id="km_atual" name="km_atual" required>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="motorista_abastecimento" class="required">Motorista</label>
+                                <input type="text" id="motorista_abastecimento" name="motorista_abastecimento" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="km_rodado">KM Rodado</label>
+                                <input type="text" id="km_rodado" name="km_rodado" readonly style="background-color: #e9ecef;">
+                            </div>
+                            <div class="form-group">
+                                <label for="litros" class="required">Litros</label>
+                                <input type="number" id="litros" name="litros" step="0.01" required>
+                            </div>
+                             <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="media_km_l">Média (KM/L)</label>
+                                <input type="text" id="media_km_l" name="media_km_l" readonly style="background-color: #e9ecef;">
+                            </div>
+                        </div>
+                    </div>
+                     <div class="buttons">
+                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                        <button type="submit" class="btn btn-primary">Registrar Abastecimento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="registros-wrapper">
+            <div class="registro-container">
+                <h3>Registros de Saída de Viatura</h3>
+                <table id="tabelaSaidas">
+                    <thead>
+                        <tr>
+                            <th>Viatura</th>
+                            <th>Data/Hora Saída</th>
+                            <th>Km Saída</th>
+                            <th>Motorista</th>
+                            <th>Protocolo</th>
+                            <th>Km Chegada</th>
+                            <th>Km Rodado</th>
+                            <th>Fotos</th>
+                            <th>Observações</th> <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaSaidasBody">
+                    </tbody>
+                </table>
+            </div>
+  
+            <div class="registro-container">
+                <h3>Registros de Abastecimento</h3>
+                <table id="tabelaAbastecimento">
+                    <thead>
+                        <tr>
+                            <th>Viatura</th>
+                            <th>Data</th>
+                            <th>KM Abastec.</th>
+                            <th>KM Atual</th>
+                            <th>Litros</th>
+                            <th>KM Rodado</th>
+                            <th>Média</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2025 GUARDA MUNICIPAL DE LAGUNA
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="voltaModal">
+        <div class="modal-content">
+            <h3>Registrar Chegada da Viatura</h3>
+            <p id="modalViaturaInfo"></p> 
+
+            <div class="form-group">
+                <label for="modalKmChegada" class="required">KM de Chegada</label>
+                <input type="number" id="modalKmChegada" name="modalKmChegada" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="modalFoto">Anexar Fotos (Opcional)</label>
+                <input type="file" id="modalFoto" name="modalFoto" accept="image/*" multiple>
+            </div>
+            
+            <div class="form-group">
+                <label for="modalComentarios">Observações (Opcional)</label>
+                <textarea id="modalComentarios" name="modalComentarios" rows="3"></textarea>
+            </div>
+            
+            <p id="modalErro">Mensagem de erro aqui.</p>
+
+            <div class="buttons" style="padding: 0;">
+                <button type="button" class="btn btn-secondary" id="modalCancelarBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="modalSalvarBtn">Salvar</button>
+            </div>
+            <input type="hidden" id="modalRowId">
+        </div>
+    </div>
+
+    <!-- Firebase SDK (compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+    <!-- Configuração do Firebase -->
+    <script>
+        // IMPORTANTE: Substitua com suas credenciais do Firebase
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY_AQUI",
+            authDomain: "SEU_PROJECT_ID.firebaseapp.com",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_PROJECT_ID.appspot.com",
+            messagingSenderId: "SEU_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+        
+        // Inicializa Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Referências globais
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+    </script>
+    
+    <script src="viaturas.js"></script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
