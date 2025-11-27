@@ -16,6 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainContainer = document.getElementById('mainContainer');
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
+    const openCreateAccountBtn = document.getElementById('openCreateAccountBtn');
+    const createAccountModal = document.getElementById('createAccountModal');
+    const createAccountCancel = document.getElementById('createAccountCancel');
+    const createAccountSubmit = document.getElementById('createAccountSubmit');
+    const createAccountError = document.getElementById('createAccountError');
+    const newEmailInput = document.getElementById('newEmail');
+    const newPasswordInput = document.getElementById('newPassword');
+    const newPasswordConfirmInput = document.getElementById('newPasswordConfirm');
     const userInfo = document.getElementById('userInfo');
     const userEmail = document.getElementById('userEmail');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -50,13 +58,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         const submitBtn = loginForm.querySelector('button[type="submit"]');
-        
+        // Detecta se o Firebase está configurado. Se não estiver, usamos fallback local
+        const apiKey = (firebase && firebase.app && firebase.app().options && firebase.app().options.apiKey) ? firebase.app().options.apiKey : '';
+        const useLocalAuth = !apiKey || apiKey.includes('SUA_API_KEY') || apiKey.trim() === '';
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'Entrando...';
         loginError.style.display = 'none';
         
         try {
-            await auth.signInWithEmailAndPassword(email, password);
+            if (useLocalAuth) {
+                // Fallback local: valida contra localStorage (senhas armazenadas como hash SHA-256)
+                const ok = await signInLocal(email, password);
+                if (!ok) throw { code: 'auth/wrong-password' };
+                // Simula usuário logado: atualiza UI manualmente
+                // Criamos um pseudo usuário para a interface
+                const user = { email };
+                loginContainer.style.display = 'none';
+                mainContainer.style.display = 'block';
+                userInfo.style.display = 'flex';
+                userEmail.textContent = user.email;
+                carregarSaidas();
+                carregarAbastecimentos();
+            } else {
+                await auth.signInWithEmailAndPassword(email, password);
+            }
         } catch (error) {
             console.error('Erro no login:', error);
             loginError.textContent = getErrorMessage(error.code);
@@ -66,6 +92,109 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = 'Entrar';
         }
     });
+
+    // --- Abrir modal Criar Conta ---
+    if (openCreateAccountBtn) {
+        openCreateAccountBtn.addEventListener('click', () => {
+            if (createAccountModal) createAccountModal.style.display = 'flex';
+            if (createAccountError) createAccountError.style.display = 'none';
+            if (newEmailInput) newEmailInput.value = '';
+            if (newPasswordInput) newPasswordInput.value = '';
+            if (newPasswordConfirmInput) newPasswordConfirmInput.value = '';
+        });
+    }
+    if (createAccountCancel) createAccountCancel.addEventListener('click', () => { if (createAccountModal) createAccountModal.style.display = 'none'; });
+    if (createAccountModal) createAccountModal.addEventListener('click', (e) => { if (e.target === createAccountModal) createAccountModal.style.display = 'none'; });
+
+    // Função para criar conta (Firebase quando configurado, ou local fallback)
+    if (createAccountSubmit) {
+        createAccountSubmit.addEventListener('click', async () => {
+            const email = (newEmailInput && newEmailInput.value) ? newEmailInput.value.trim() : '';
+            const password = (newPasswordInput && newPasswordInput.value) ? newPasswordInput.value : '';
+            const confirm = (newPasswordConfirmInput && newPasswordConfirmInput.value) ? newPasswordConfirmInput.value : '';
+
+            if (!email || !password || !confirm) {
+                createAccountError.textContent = 'Preencha todos os campos.';
+                createAccountError.style.display = 'block';
+                return;
+            }
+            if (password.length < 6) {
+                createAccountError.textContent = 'Senha deve ter pelo menos 6 caracteres.';
+                createAccountError.style.display = 'block';
+                return;
+            }
+            if (password !== confirm) {
+                createAccountError.textContent = 'Senhas não conferem.';
+                createAccountError.style.display = 'block';
+                return;
+            }
+
+            const apiKey = (firebase && firebase.app && firebase.app().options && firebase.app().options.apiKey) ? firebase.app().options.apiKey : '';
+            const useLocalAuth = !apiKey || apiKey.includes('SUA_API_KEY') || apiKey.trim() === '';
+
+            try {
+                if (useLocalAuth) {
+                    const created = await createLocalUser(email, password);
+                    if (!created) throw new Error('Usuário já existe');
+                    // Mensagem de sucesso
+                    createAccountError.style.color = 'green';
+                    createAccountError.textContent = 'Conta criada com sucesso (local). Use suas credenciais para entrar.';
+                    createAccountError.style.display = 'block';
+                    setTimeout(() => { if (createAccountModal) createAccountModal.style.display = 'none'; createAccountError.style.color = 'red'; createAccountError.style.display = 'none'; }, 1800);
+                } else {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    createAccountError.style.color = 'green';
+                    createAccountError.textContent = 'Conta criada com sucesso. Você já está logado.';
+                    createAccountError.style.display = 'block';
+                    setTimeout(() => { if (createAccountModal) createAccountModal.style.display = 'none'; createAccountError.style.color = 'red'; createAccountError.style.display = 'none'; }, 1500);
+                }
+            } catch (err) {
+                console.error('Erro ao criar conta:', err);
+                createAccountError.style.color = 'red';
+                createAccountError.textContent = err.message || 'Erro ao criar conta.';
+                createAccountError.style.display = 'block';
+            }
+        });
+    }
+
+    // ---------- Autenticação Local (localStorage com hash SHA-256) ----------
+    async function hashPassword(password) {
+        const enc = new TextEncoder();
+        const data = enc.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getLocalUsers() {
+        try {
+            const raw = localStorage.getItem('gml_local_users');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveLocalUsers(users) {
+        localStorage.setItem('gml_local_users', JSON.stringify(users));
+    }
+
+    async function createLocalUser(email, password) {
+        const users = getLocalUsers();
+        if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) return false;
+        const hash = await hashPassword(password);
+        users.push({ email: email.toLowerCase(), hash });
+        saveLocalUsers(users);
+        return true;
+    }
+
+    async function signInLocal(email, password) {
+        const users = getLocalUsers();
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (!user) return false;
+        const hash = await hashPassword(password);
+        return hash === user.hash;
+    }
     
     // Logout
     logoutBtn.addEventListener('click', async () => {

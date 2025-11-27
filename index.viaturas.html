@@ -586,20 +586,46 @@
                     </button>
                 </div>
             </form>
+            <div style="text-align:center; margin-top:12px;">
+                <button id="openCreateAccountBtn" class="btn btn-secondary" style="width: 100%; padding:10px; margin-top:6px;">Criar Conta</button>
+            </div>
             <div class="login-footer">
                 Sistema de Controle de Viaturas v1.0<br>
-                © 2025 GML - Todos os direitos reservados
+                © 2025 GML 
             </div>
         </div>
     </div>
     
+    <!-- Modal Criar Conta (aparece na tela de login) -->
+    <div class="modal-overlay" id="createAccountModal" style="display: none; z-index: 3000;">
+        <div class="modal-content" style="max-width:420px;">
+            <h3>Criar Nova Conta</h3>
+            <div class="form-group">
+                <label for="newEmail">E-mail</label>
+                <input type="email" id="newEmail" placeholder="seu@email.com">
+            </div>
+            <div class="form-group">
+                <label for="newPassword">Senha</label>
+                <input type="password" id="newPassword" placeholder="mínimo 6 caracteres">
+            </div>
+            <div class="form-group">
+                <label for="newPasswordConfirm">Confirmar Senha</label>
+                <input type="password" id="newPasswordConfirm" placeholder="confirme a senha">
+            </div>
+            <p id="createAccountError" style="color:red; display:none; margin-bottom:10px;"></p>
+            <div class="buttons" style="padding:0;">
+                <button type="button" class="btn btn-secondary" id="createAccountCancel">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="createAccountSubmit">Criar Conta</button>
+            </div>
+        </div>
+    </div>
     <div class="container" id="mainContainer" style="display: none;">
         <div class="page-header">
-            <h1>🚓 Controle de Viaturas GML</h1>
+            <h1> Controle de Viaturas GML</h1>
             <p>Sistema de Gestão e Monitoramento de Viaturas - Guarda Municipal de Laguna</p>
         </div>
         
-        <div class="user-info" id="userInfo">
+        <div class="user-info" id="userInfo"> 
             <span id="userEmail"></span>
             <button class="btn-logout" id="logoutBtn">Sair</button>
         </div>
@@ -772,7 +798,7 @@
         </div>
 
         <div class="footer">
-            © 2025 GUARDA MUNICIPAL DE LAGUNA
+                            © 2025 GUARDA MUNICIPAL DE LAGUNA                         
         </div>
     </div>
     

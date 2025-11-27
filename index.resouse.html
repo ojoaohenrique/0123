@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GML - Controle de Viaturas (Refatorado)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg-1:#0d1117; --card:#ffffff; --primary:#0056b3; --accent:#003d82; --muted:#6c757d; --success:#28a745; }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b1220 0%, #07101a 100%);color:#222;margin:0;padding:24px;}
+    .app{max-width:1200px;margin:0 auto}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+    h1{color:white;margin:0;font-size:22px}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    @media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e6e6;font-size:14px}
+    .row{display:flex;gap:8px}
+    .btn{padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid #e6e6e6}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;border:1px solid #eee;text-align:left;font-size:13px}
+    .thumb{width:56px;height:56px;object-fit:cover;border-radius:6px}
+    .muted{color:var(--muted)}
+
+    /* small utilities */
+    .hidden{display:none}
+    .text-right{text-align:right}
+    .small{font-size:12px}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top">
+      <h1>🚓 GML - Controle de Viaturas (Refatorado)</h1>
+      <div class="muted small">Versão: refactor-1 • Local/Firestore • <span id="userEmailUI">--</span></div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card" id="saidaCard">
+          <h3 style="margin-top:0">Registrar Saída</h3>
+          <form id="saidaForm">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <label for="viatura">Viatura</label>
+                <select id="viatura" required>
+                  <option value="">Selecione...</option>
+                  <option>VTR 0109</option>
+                  <option>VTR 0110</option>
+                  <option>VTR 0111</option>
+                </select>
+              </div>
+              <div>
+                <label for="protocolo">Protocolo</label>
+                <input id="protocolo" type="text" required />
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+              <div>
+                <label for="km_saida">Km Saída</label>
+                <input id="km_saida" type="number" required min="0" />
+              </div>
+              <div>
+                <label for="motorista">Motorista</label>
+                <select id="motorista" required>
+                  <option value="">Selecione...</option>
+                  <option>DUARTE</option>
+                  <option>JACQUES</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:8px">
+              <label for="patrulhamento">Tipo de Patrulhamento</label>
+              <select id="patrulhamento" required>
+                <option value="">Selecione...</option>
+                <option>Ronda Preventiva</option>
+                <option>Apoio Operacional</option>
+              </select>
+            </div>
+
+            <div class="row" style="margin-top:12px;justify-content:flex-end">
+              <button type="reset" class="btn btn-ghost">Limpar</button>
+              <button type="submit" class="btn btn-primary">Registrar Saída</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin-top:0">Registros de Saída</h3>
+          <div class="small muted">Clique em "Registrar Volta" para fechar a saída</div>
+          <table id="tabelaSaidas">
+            <thead>
+              <tr><th>Viatura</th><th>Data/Hora</th><th>Km Saída</th><th>Motorista</th><th>Protocolo</th><th>Km Chegada</th><th>Km Rodado</th><th>Fotos</th><th>Obs</th><th>Ações</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <aside>
+        <div class="card">
+          <h3 style="margin-top:0">Abastecimento</h3>
+          <form id="abastecimentoForm">
+            <label for="viatura_ab">Viatura</label>
+            <select id="viatura_ab" required><option></option><option>VTR 0109</option></select>
+            <label for="data_ab">Data</label>
+            <input id="data_ab" type="date" required />
+            <label for="km_ab">KM Abastec.</label>
+            <input id="km_ab" type="number" required />
+            <label for="km_atual">KM Atual</label>
+            <input id="km_atual" type="number" required />
+            <label for="litros">Litros</label>
+            <input id="litros" type="number" step="0.01" required />
+            <div class="row" style="margin-top:10px;justify-content:flex-end">
+              <button type="submit" class="btn btn-primary">Registrar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">Export / Admin</h3>
+          <div class="row" style="margin-top:8px">
+            <button id="exportCsv" class="btn btn-ghost">Exportar CSV</button>
+            <button id="clearLocal" class="btn btn-ghost">Limpar Local</button>
+          </div>
+          <div style="margin-top:10px" class="small muted">Recomendo migrar este app para React + Firebase (Next.js) para segurança e roles.</div>
+        </div>
+
+      </aside>
+    </div>
+
+    <div style="height:24px"></div>
+
+    <!-- Modal simples (aparecerá via JS) -->
+    <div id="modal" class="hidden card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:520px;z-index:2000"></div>
+
+  </div>
+
+  <!-- Firebase compat (opcional) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <script type="module">
+    // =====================================================
+    // Viaturas - Refatorado (modular, claro, comentado)
+    // - Usa Firestore quando disponível
+    // - Fallback localStorage quando não houver config
+    // - Upload de fotos para Storage (opcional)
+    // - CSV export
+    // =====================================================
+
+    // ---------------- CONFIGURAÇÃO FIREBASE ----------------
+    // Substitua pelas suas credenciais
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY_AQUI",
+      authDomain: "SEU_PROJECT.firebaseapp.com",
+      projectId: "SEU_PROJECT",
+      storageBucket: "SEU_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    let useFirestore = false;
+    try {
+      if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('SUA_API_KEY')) {
+        firebase.initializeApp(firebaseConfig);
+        useFirestore = true;
+      }
+    } catch (err) {
+      console.warn('Firebase não configurado (fallback local).', err);
+    }
+
+    const auth = (useFirestore && firebase.auth()) || null;
+    const db = (useFirestore && firebase.firestore()) || null;
+    const storage = (useFirestore && firebase.storage()) || null;
+
+    // ----------------- UI ELEMENTS -----------------
+    const saidaForm = document.getElementById('saidaForm');
+    const tabelaSaidas = document.querySelector('#tabelaSaidas tbody');
+    const abastecimentoForm = document.getElementById('abastecimentoForm');
+    const exportCsvBtn = document.getElementById('exportCsv');
+    const clearLocalBtn = document.getElementById('clearLocal');
+    const userEmailUI = document.getElementById('userEmailUI');
+
+    // ----------------- UTIL / STORAGE KEYS -----------------
+    const LOCAL_SAIDAS_KEY = 'gml_saidas_v1';
+
+    function nowIso() { return new Date().toISOString(); }
+
+    // ----------------- Core functions -----------------
+    async function salvarSaidaLocal(saida) {
+      const arr = JSON.parse(localStorage.getItem(LOCAL_SAIDAS_KEY) || '[]');
+      arr.unshift(saida);
+      localStorage.setItem(LOCAL_SAIDAS_KEY, JSON.stringify(arr));
+    }
+
+    function lerSaidasLocal() {
+      return JSON.parse(localStorage.getItem(LOCAL_SAIDAS_KEY) || '[]');
+    }
+
+    async function salvarSaidaFirestore(saida) {
+      if (!db) throw new Error('Firestore não inicializado');
+      const ref = await db.collection('saidas').add(saida);
+      return ref.id;
+    }
+
+    // Adiciona linha na tabela (reutilizável)
+    function renderLinhaSaida(saida) {
+      const tr = document.createElement('tr');
+      tr.dataset.id = saida.id || saida._id || '';
+
+      function td(t){ const c=document.createElement('td'); c.textContent=t; return c }
+
+      tr.appendChild(td(saida.viatura));
+      tr.appendChild(td(new Date(saida.ts).toLocaleString()));
+      tr.appendChild(td(saida.kmSaida));
+      tr.appendChild(td(saida.motorista));
+      tr.appendChild(td(saida.protocolo));
+      tr.appendChild(td(saida.kmChegada || '-'));
+      tr.appendChild(td(saida.kmRodado || '-'));
+
+      // fotos
+      const fotosTd = document.createElement('td');
+      if (saida.fotos && saida.fotos.length) {
+        saida.fotos.forEach(u=>{
+          const img=document.createElement('img'); img.src=u; img.className='thumb'; img.style.marginRight='6px'; fotosTd.appendChild(img);
+        })
+      } else fotosTd.textContent='-';
+      tr.appendChild(fotosTd);
+
+      tr.appendChild(td(saida.observacoes||'-'));
+
+      const acoesTd = document.createElement('td');
+      if (!saida.kmChegada) {
+        const btn = document.createElement('button'); btn.className='btn btn-primary'; btn.textContent='Registrar Volta';
+        btn.addEventListener('click', ()=>abrirModalVolta(saida, tr));
+        acoesTd.appendChild(btn);
+      } else {
+        const disabled=document.createElement('button'); disabled.className='btn btn-ghost'; disabled.textContent='Finalizado'; disabled.disabled=true; acoesTd.appendChild(disabled);
+      }
+      tr.appendChild(acoesTd);
+
+      tabelaSaidas.prepend(tr);
+    }
+
+    // Renderiza todas as saídas (local ou firestore)
+    async function carregarSaidas() {
+      tabelaSaidas.innerHTML='';
+      if (useFirestore && db) {
+        const snap = await db.collection('saidas').orderBy('ts','desc').limit(200).get();
+        snap.forEach(d=>{
+          const data = d.data(); data.id = d.id; renderLinhaSaida(mapFromFirestore(data));
+        });
+      } else {
+        lerSaidasLocal().forEach(s=>renderLinhaSaida(s));
+      }
+    }
+
+    function mapFromFirestore(d){
+      // adapta campos (se vierem como timestamps)
+      return {
+        viatura:d.viatura,
+        ts: d.ts && d.ts.seconds ? d.ts.seconds*1000 : (d.ts||Date.now()),
+        kmSaida:d.kmSaida,
+        motorista:d.motorista,
+        protocolo:d.protocolo,
+        kmChegada:d.kmChegada,
+        kmRodado:d.kmRodado,
+        fotos:d.fotos||[],
+        observacoes:d.observacoes
+      }
+    }
+
+    // Abre modal para salvar volta
+    function abrirModalVolta(saida, trElement) {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = '';
+      modal.classList.remove('hidden');
+
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <h3>Registrar Chegada - ${saida.viatura}</h3>
+        <div style="margin-top:8px"><label>Km Chegada</label><input id="km_chegada_modal" type="number" min="${saida.kmSaida}" /></div>
+        <div style="margin-top:8px"><label>Fotos (opcional)</label><input id="fotos_modal" type="file" multiple accept="image/*" /></div>
+        <div style="margin-top:8px"><label>Observações</label><textarea id="obs_modal"></textarea></div>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end"><button id="cancel_modal" class="btn btn-ghost">Cancelar</button><button id="save_modal" class="btn btn-primary">Salvar</button></div>
+      `;
+      modal.appendChild(container);
+
+      document.getElementById('cancel_modal').addEventListener('click', ()=>{ modal.classList.add('hidden'); modal.innerHTML=''; });
+
+      document.getElementById('save_modal').addEventListener('click', async ()=>{
+        const kmC = Number(document.getElementById('km_chegada_modal').value);
+        if (isNaN(kmC) || kmC < Number(saida.kmSaida)) { alert('Km de chegada inválido'); return }
+        const rodado = kmC - Number(saida.kmSaida);
+
+        // upload de fotos para storage (se configurado)
+        const fotosInput = document.getElementById('fotos_modal');
+        let fotosUrls = [];
+        if (fotosInput && fotosInput.files.length && storage) {
+          for (const f of fotosInput.files) {
+            const path = `saidas/${Date.now()}_${f.name}`;
+            const ref = storage.ref().child(path);
+            await ref.put(f);
+            const url = await ref.getDownloadURL();
+            fotosUrls.push(url);
+          }
+        } else if (fotosInput && fotosInput.files.length) {
+          // fallback: convert to dataURL (local only)
+          for (const f of fotosInput.files) {
+            fotosUrls.push(await fileToDataUrl(f));
+          }
+        }
+
+        // atualiza objeto
+        saida.kmChegada = kmC;
+        saida.kmRodado = rodado;
+        saida.fotos = (saida.fotos||[]).concat(fotosUrls);
+        saida.observacoes = document.getElementById('obs_modal').value || '';
+
+        // salva (firestore ou local)
+        if (useFirestore && db && saida.id) {
+          await db.collection('saidas').doc(saida.id).update({
+            kmChegada: saida.kmChegada,
+            kmRodado: saida.kmRodado,
+            fotos: saida.fotos,
+            observacoes: saida.observacoes
+          });
+          // re-carregar ou atualizar linha
+          carregarSaidas();
+        } else if (!saida.id) {
+          // local: atualizar o registro local
+          const arr = lerSaidasLocal();
+          const idx = arr.findIndex(x=>x._id===saida._id);
+          if (idx>-1) { arr[idx]=saida; localStorage.setItem(LOCAL_SAIDAS_KEY, JSON.stringify(arr)); }
+          carregarSaidas();
+        }
+
+        modal.classList.add('hidden'); modal.innerHTML='';
+      });
+    }
+
+    // utils: file -> dataURL
+    function fileToDataUrl(file){
+      return new Promise((res,rej)=>{
+        const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file);
+      })
+    }
+
+    // evento de submit de saida
+    saidaForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const saida = {
+        viatura: document.getElementById('viatura').value,
+        protocolo: document.getElementById('protocolo').value,
+        kmSaida: Number(document.getElementById('km_saida').value),
+        motorista: document.getElementById('motorista').value,
+        patrulhamento: document.getElementById('patrulhamento').value,
+        ts: Date.now()
+      };
+
+      // salva
+      if (useFirestore && db) {
+        const id = await salvarSaidaFirestore(saida);
+        saida.id = id;
+      } else {
+        // local: adiciona _id
+        saida._id = 'local-'+Date.now();
+        await salvarSaidaLocal(saida);
+      }
+
+      // atualiza UI
+      renderLinhaSaida(saida);
+      saidaForm.reset();
+    });
+
+    // abastecimento simples (salva local)
+    abastecimentoForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const data = {
+        viatura: document.getElementById('viatura_ab').value,
+        data: document.getElementById('data_ab').value,
+        kmAb: document.getElementById('km_ab').value,
+        kmAtual: document.getElementById('km_atual').value,
+        litros: document.getElementById('litros').value
+      };
+      // salvar localStorage (melhor implementar Firestore)
+      const AKEY = 'gml_abastecimentos_v1';
+      const arr = JSON.parse(localStorage.getItem(AKEY)||'[]'); arr.unshift(data); localStorage.setItem(AKEY,JSON.stringify(arr));
+      alert('Abastecimento registrado (local)');
+      abastecimentoForm.reset();
+    });
+
+    // export CSV
+    exportCsvBtn.addEventListener('click', ()=>{
+      const rows = lerSaidasLocal();
+      const csv = [['viatura,ts,kmSaida,motorista,protocolo,kmChegada,kmRodado,observacoes']].concat(rows.map(r=>`${escapeCsv(r.viatura)},${r.ts},${r.kmSaida},${escapeCsv(r.motorista)},${escapeCsv(r.protocolo)},${r.kmChegada||''},${r.kmRodado||''},${escapeCsv(r.observacoes||'')}`));
+      const blob = new Blob([csv.join('\n')],{type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='saidas_gml.csv'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    clearLocalBtn.addEventListener('click', ()=>{ if(confirm('Limpar todos registros locais?')){ localStorage.removeItem(LOCAL_SAIDAS_KEY); location.reload(); }});
+
+    function escapeCsv(v){ if(v==null) return ''; return '"'+String(v).replace(/"/g,'""')+'"'; }
+
+    // start
+    (async function init(){
+      userEmailUI.textContent = useFirestore? (auth && auth.currentUser ? auth.currentUser.email : 'Firebase') : 'LocalMode';
+      await carregarSaidas();
+    })();
+
+  </script>
+</body>
+</html>
+
